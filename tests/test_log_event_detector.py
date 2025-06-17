@@ -1,7 +1,10 @@
 import pytest
+from typing import List
 
-from log_parser.log_parser import LogParser
-from tests.conftest import make_log
+from log_parser.log import Log
+from log_parser.event_detector import EventDetector
+from log_parser.event_pattern import EventPattern
+from tests.utils import make_log
 
 
 @pytest.mark.parametrize(
@@ -76,8 +79,13 @@ from tests.conftest import make_log
         ),
     ],
 )
-def test_log_parser_single_event(sample_pattern, logs, expected_event_count):
-    parser = LogParser(event_patterns=[sample_pattern])
-    parser.parse(logs)
-    detected_events = parser.get_detected_events()
+def test_log_parser_single_event(
+    sample_pattern: EventPattern, logs: List[Log], expected_event_count: int
+):
+    parser = EventDetector(event_patterns=[sample_pattern])
+    detected_events = parser.detect_events(logs)
     assert len(detected_events) == expected_event_count
+
+    for event in detected_events:
+        assert event.name == sample_pattern.name
+        assert event.duration <= sample_pattern.max_duration_seconds

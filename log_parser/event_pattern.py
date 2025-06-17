@@ -1,21 +1,25 @@
 import re
 from typing import List
-from dataclasses import dataclass
 
 
-@dataclass
 class EventPattern:
     """
     Class representing a sequence of log patterns to detect an event.
     The sequence must be matched in order and within a specified duration.
     """
 
-    name: str
-    sequence: List[str]
-    max_duration_seconds: int
+    def __init__(self, name: str, sequence: List[str], max_duration_seconds: int):
+        """
+        Initialize the EventPattern with a name, sequence of patterns, and maximum duration.
 
-    def __post_init__(self):
-        self._compiled_patterns = [re.compile(p) for p in self.sequence]
+        Args:
+            name (str): The name of the event pattern.
+            sequence (List[str]): A list of regex patterns that define the sequence.
+            max_duration_seconds (int): The maximum duration in seconds for the sequence to be matched.
+        """
+        self.name = name
+        self.max_duration_seconds = max_duration_seconds
+        self.sequence = [re.compile(p) for p in sequence]
 
     def matches_pattern_at_index(self, message: str, index: int = 0) -> bool:
         """
@@ -29,6 +33,8 @@ class EventPattern:
         Raises:
             IndexError: If the index is out of range for the compiled pattern list
         """
-        if not 0 <= index < len(self._compiled_patterns):
-            raise IndexError("Index out of range for the compiled pattern list.")
-        return bool(self._compiled_patterns[index].search(message))
+        if not (0 <= index < len(self.sequence)):
+            raise IndexError(
+                f"Index ({index}) out of range for the compiled pattern list."
+            )
+        return self.sequence[index].match(message) is not None

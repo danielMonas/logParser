@@ -1,7 +1,10 @@
 import pytest
+from typing import List
 
-from log_parser.log_sequence_handler import LogSequenceHandler
-from tests.conftest import make_log
+from log_parser.log import Log
+from log_parser.event_pattern import EventPattern
+from log_parser.log_sequence_matcher import LogSequenceMatcher
+from tests.utils import make_log
 
 
 # Parametrize different full log sequences and expected result count
@@ -23,11 +26,13 @@ from tests.conftest import make_log
         ],
     ],
 )
-def test_log_sequence_handling_valid(sample_pattern, logs):
-    sequence_handler = LogSequenceHandler(event_pattern=sample_pattern)
+def test_log_sequence_complete(sample_pattern: EventPattern, logs: List[Log]):
+    sequence_handler = LogSequenceMatcher(sample_pattern, logs[0].timestamp)
+    sequence_complete = False
     for log in logs:
-        sequence_handler.handle(log)
-    assert sequence_handler.is_sequence_complete()
+        if sequence_handler.process_log(log):
+            sequence_complete = True
+    assert sequence_complete
 
 
 @pytest.mark.parametrize(
@@ -46,26 +51,26 @@ def test_log_sequence_handling_valid(sample_pattern, logs):
             make_log("something else", 1),
             make_log("another irrelevant log", 3),
         ],
-        [  # empty sequence
-        ],
     ],
 )
-def test_log_sequence_handling_invalid(sample_pattern, logs):
-    sequence_handler = LogSequenceHandler(event_pattern=sample_pattern)
+def test_log_sequence_incomplete(sample_pattern: EventPattern, logs: List[Log]):
+    sequence_handler = LogSequenceMatcher(sample_pattern, logs[0].timestamp)
+    sequence_complete = False
     for log in logs:
-        sequence_handler.handle(log)
-    assert not sequence_handler.is_sequence_complete()
+        if sequence_handler.process_log(log):
+            sequence_complete = True
+    assert not sequence_complete
 
 
-def test_log_sequence_handler_expiration(sample_pattern):
-    sequence_handler = LogSequenceHandler(event_pattern=sample_pattern)
+def test_log_sequence_matcher_expiration(sample_pattern: EventPattern):
     start_log = make_log("start", 0)
-    sequence_handler.handle(start_log)
+    sequence_matcher = LogSequenceMatcher(sample_pattern, start_log.timestamp)
+    sequence_matcher.process_log(start_log)
 
     # Simulate a log that is within the max duration
     current_log = make_log("continue", 10)
-    assert not sequence_handler.has_expired(current_log["timestamp"])
+    assert not sequence_matcher.has_expired(current_log.timestamp)
 
     # Simulate a log that exceeds the max duration
     expired_log = make_log("finish", sample_pattern.max_duration_seconds + 1)
-    assert sequence_handler.has_expired(expired_log["timestamp"])
+    assert sequence_matcher.has_expired(expired_log.timestamp)
