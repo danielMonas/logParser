@@ -1,5 +1,4 @@
 from typing import List, Dict
-from datetime import datetime
 
 from log_parser.event_pattern import EventPattern
 from log_parser.detected_event import DetectedEvent
@@ -47,12 +46,13 @@ class LogParser:
         """
         handlers_to_remove = []
         for handler in self._handlers:
-            handler.handle(log)
-            if handler.has_expired(datetime.fromisoformat(log["timestamp"])):
+            if handler.has_expired(log["timestamp"]):
                 handlers_to_remove.append(handler)
-            elif handler.is_sequence_complete():
-                self._detected_events.append(handler.build_detected_event())
-                handlers_to_remove.append(handler)
+            elif handler.handle(log):
+                if handler.is_sequence_complete():
+                    self._detected_events.append(handler.build_detected_event())
+                    handlers_to_remove.append(handler)
+                    break
 
         for handler in handlers_to_remove:
             self._handlers.remove(handler)

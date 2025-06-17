@@ -15,20 +15,24 @@ class LogSequenceHandler:
         self._matched_logs = []
         self._start_time = None
 
-    def handle(self, log: dict) -> None:
+    def handle(self, log: dict) -> bool:
         """
         Handles a log entry and checks if it matches the event pattern.
         Args:
             log (dict): A log entry
+
+        Returns:
+            bool: Whether the log entry was successfully handled.
         """
         if not self._event_pattern.matches_pattern_at_index(
             log["message"], len(self._matched_logs)
         ):
-            return
+            return False
 
         self._matched_logs.append(log)
         if self._start_time is None:
             self._start_time = datetime.fromisoformat(log["timestamp"])
+        return True
 
     def is_sequence_complete(self) -> bool:
         """
@@ -49,7 +53,7 @@ class LogSequenceHandler:
             matched_logs=self._matched_logs,
         )
 
-    def has_expired(self, current_log_timestamp: datetime) -> bool:
+    def has_expired(self, current_log_timestamp: str) -> bool:
         """
         Determines whether this handler is expired based on the current log
         timestamp
@@ -62,5 +66,5 @@ class LogSequenceHandler:
         """
         if self._start_time is None:
             return False
-        time_since_start = (current_log_timestamp - self._start_time).total_seconds()
+        time_since_start = (datetime.fromisoformat(current_log_timestamp) - self._start_time).total_seconds()
         return time_since_start > self._event_pattern.max_duration_seconds
