@@ -18,8 +18,8 @@ class EventPattern:
             max_duration_seconds (int): The maximum duration in seconds for the sequence to be matched.
         """
         self.name = name
-        self.max_duration_seconds = max_duration_seconds
         self.sequence = [re.compile(p) for p in sequence]
+        self.max_duration_seconds = max_duration_seconds
 
     def matches_pattern_at_index(self, message: str, index: int = 0) -> bool:
         """
@@ -33,8 +33,6 @@ class EventPattern:
         Raises:
             IndexError: If the index is out of range for the compiled pattern list
         """
-        if not (0 <= index < len(self.sequence)):
-            raise IndexError(
-                f"Index ({index}) out of range for the compiled pattern list."
-            )
-        return self.sequence[index].match(message) is not None
+        if 0 <= index < len(self.sequence):
+            return self.sequence[index].match(message) is not None
+        raise IndexError(f"Index ({index}) out of range for the compiled pattern list.")

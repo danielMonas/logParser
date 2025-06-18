@@ -1,13 +1,14 @@
+from typing import Optional
 from datetime import datetime
 
+from log_parser.log import Log
 from log_parser.event_pattern import EventPattern
 from log_parser.detected_event import DetectedEvent
-from log_parser.log import Log
 
 
 class LogSequenceMatcher:
     """
-    OngoingLogSequence is responsible for managing the state of a sequence of
+    This class is responsible for managing the state of a sequence of
     log entries that match a specific event pattern over time.
     The sequence is considered expired if the time since its creation exceeds
     the maximum duration defined in the event pattern.
@@ -18,33 +19,33 @@ class LogSequenceMatcher:
         self._start_time = start_time
         self._matched_logs = []
 
-    def process_log(self, log: Log) -> bool:
+    def match_log(self, log: Log) -> Optional[DetectedEvent]:
         """
         Handles a log entry and checks if it matches the event pattern.
         Args:
             log (Log): A log entry
 
         Returns:
-            bool: Whether the sequence is complete after handling this log.
+            Optional[DetectedEvent]: If the log matches the event pattern at the
+            current index, returns a DetectedEvent with the matched logs. If the
+            sequence is not complete, returns None.
         """
-        # Check if the log matches the pattern at the current index. If it does not,
+        if self.has_expired(log.timestamp):
+            raise TimeoutError(
+                f"Sequence for pattern [{self._event_pattern.name}] that started at [{self._start_time}] has expired"
+            )
+        # Check if the log matches the pattern at the current index. If it does,
+        # add it to the matched logs, and return whether the sequence is complete.
         if self._event_pattern.matches_pattern_at_index(
             log.message, len(self._matched_logs)
         ):
             self._matched_logs.append(log)
 
-        return len(self._matched_logs) == len(self._event_pattern.sequence)
-
-    def build_detected_event(self) -> DetectedEvent:
-        """
-        Builds a DetectedEvent object based on matched logs and event pattern
-        Returns:
-            DetectedEvent: An object representing the detected event
-        """
-        return DetectedEvent(
-            name=self._event_pattern.name,
-            matched_logs=self._matched_logs,
-        )
+        if len(self._matched_logs) == len(self._event_pattern.sequence):
+            return DetectedEvent(
+                name=self._event_pattern.name,
+                matched_logs=self._matched_logs,
+            )
 
     def has_expired(self, current_log_timestamp: datetime) -> bool:
         """

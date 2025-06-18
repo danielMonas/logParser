@@ -23,4 +23,4 @@ def make_log(message: str, offset_seconds: int = 0) -> Log:
         day=current_time.day,
         second=offset_seconds,
     )
-    return Log(message=message, timestamp=log_time.isoformat())
+    return Log(message, log_time.isoformat())

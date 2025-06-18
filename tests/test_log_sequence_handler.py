@@ -26,12 +26,13 @@ from tests.utils import make_log
         ],
     ],
 )
-def test_log_sequence_complete(sample_pattern: EventPattern, logs: List[Log]):
-    sequence_handler = LogSequenceMatcher(sample_pattern, logs[0].timestamp)
+def test_log_sequence_complete(basic_event_pattern: EventPattern, logs: List[Log]):
+    sequence_handler = LogSequenceMatcher(basic_event_pattern, logs[0].timestamp)
     sequence_complete = False
     for log in logs:
-        if sequence_handler.process_log(log):
+        if sequence_handler.match_log(log):
             sequence_complete = True
+            break
     assert sequence_complete
 
 
@@ -53,24 +54,24 @@ def test_log_sequence_complete(sample_pattern: EventPattern, logs: List[Log]):
         ],
     ],
 )
-def test_log_sequence_incomplete(sample_pattern: EventPattern, logs: List[Log]):
-    sequence_handler = LogSequenceMatcher(sample_pattern, logs[0].timestamp)
+def test_log_sequence_incomplete(basic_event_pattern: EventPattern, logs: List[Log]):
+    sequence_handler = LogSequenceMatcher(basic_event_pattern, logs[0].timestamp)
     sequence_complete = False
     for log in logs:
-        if sequence_handler.process_log(log):
+        if sequence_handler.match_log(log):
             sequence_complete = True
     assert not sequence_complete
 
 
-def test_log_sequence_matcher_expiration(sample_pattern: EventPattern):
+def test_log_sequence_matcher_expiration(basic_event_pattern: EventPattern):
     start_log = make_log("start", 0)
-    sequence_matcher = LogSequenceMatcher(sample_pattern, start_log.timestamp)
-    sequence_matcher.process_log(start_log)
+    sequence_matcher = LogSequenceMatcher(basic_event_pattern, start_log.timestamp)
+    sequence_matcher.match_log(start_log)
 
     # Simulate a log that is within the max duration
     current_log = make_log("continue", 10)
     assert not sequence_matcher.has_expired(current_log.timestamp)
 
     # Simulate a log that exceeds the max duration
-    expired_log = make_log("finish", sample_pattern.max_duration_seconds + 1)
+    expired_log = make_log("finish", basic_event_pattern.max_duration_seconds + 1)
     assert sequence_matcher.has_expired(expired_log.timestamp)

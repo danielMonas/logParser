@@ -1,3 +1,5 @@
+# NOTE: This is simply for demonstration purposes, and will not be used in production.
+
 import json
 from typing import List
 from typer import Typer
@@ -8,8 +10,6 @@ from log_parser.event_detector import EventDetector
 from log_parser.detected_event import DetectedEvent
 
 app = Typer()
-
-# NOTE: This is simply for demonstration purposes, and will not be used in production.
 
 
 def load_logs(log_file_path: str) -> List[Log]:
