@@ -30,7 +30,7 @@ class LogSequenceMatcher:
             current index, returns a DetectedEvent with the matched logs. If the
             sequence is not complete, returns None.
         """
-        if self.has_expired(log.timestamp):
+        if self._has_expired(log.timestamp):
             raise TimeoutError(
                 f"Sequence for pattern [{self._event_pattern.name}] that started at [{self._start_time}] has expired"
             )
@@ -47,7 +47,7 @@ class LogSequenceMatcher:
                 matched_logs=self._matched_logs,
             )
 
-    def has_expired(self, current_log_timestamp: datetime) -> bool:
+    def _has_expired(self, current_log_timestamp: datetime) -> bool:
         """
         Determines whether this sequence is expired based on the current log
         timestamp

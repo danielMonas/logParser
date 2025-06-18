@@ -52,8 +52,7 @@ class EventDetector:
 
         for matcher in self._matchers:
             try:
-                detected_event = matcher.match_log(log)
-                if detected_event:
+                if detected_event := matcher.match_log(log):
                     detected_events.append(detected_event)
                     matchers_to_remove.append(matcher)
                     break

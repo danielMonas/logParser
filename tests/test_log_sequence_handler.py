@@ -30,7 +30,7 @@ def test_log_sequence_complete(basic_event_pattern: EventPattern, logs: List[Log
     sequence_handler = LogSequenceMatcher(basic_event_pattern, logs[0].timestamp)
     sequence_complete = False
     for log in logs:
-        if sequence_handler.match_log(log):
+        if sequence_handler.match_log(log) is not None:
             sequence_complete = True
             break
     assert sequence_complete
@@ -56,11 +56,8 @@ def test_log_sequence_complete(basic_event_pattern: EventPattern, logs: List[Log
 )
 def test_log_sequence_incomplete(basic_event_pattern: EventPattern, logs: List[Log]):
     sequence_handler = LogSequenceMatcher(basic_event_pattern, logs[0].timestamp)
-    sequence_complete = False
     for log in logs:
-        if sequence_handler.match_log(log):
-            sequence_complete = True
-    assert not sequence_complete
+        assert sequence_handler.match_log(log) is None
 
 
 def test_log_sequence_matcher_expiration(basic_event_pattern: EventPattern):
@@ -68,10 +65,11 @@ def test_log_sequence_matcher_expiration(basic_event_pattern: EventPattern):
     sequence_matcher = LogSequenceMatcher(basic_event_pattern, start_log.timestamp)
     sequence_matcher.match_log(start_log)
 
-    # Simulate a log that is within the max duration
+    # Log within the sequence duration
     current_log = make_log("continue", 10)
-    assert not sequence_matcher.has_expired(current_log.timestamp)
+    assert sequence_matcher.match_log(current_log) is None
 
-    # Simulate a log that exceeds the max duration
+    # # Log that exceeds the max duration
     expired_log = make_log("finish", basic_event_pattern.max_duration_seconds + 1)
-    assert sequence_matcher.has_expired(expired_log.timestamp)
+    with pytest.raises(TimeoutError):
+        sequence_matcher.match_log(expired_log)
