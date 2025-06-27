@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Example Event",
+    "max_duration": 6000,
+    "sequence": [".*Event1.*", ".*Event2.*", ".*Event3.*"]
+  }
+  ,
+  {
+    "name": "Another Example",
+    "max_duration": 3000,
+    "sequence": [".*Another Event.*", ".*Event2.*"]
+  },
+  {
+    "name": "Error Handling",
+    "max_duration": 2000,
+    "sequence": [".*Error Event.*"]
+  },
+  {
+    "name": "Everything",
+    "max_duration": 10,
+    "sequence": [".*"]
+  }
+]
